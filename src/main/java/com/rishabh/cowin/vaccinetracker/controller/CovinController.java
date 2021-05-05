@@ -24,18 +24,17 @@ import java.time.format.DateTimeFormatter;
 @RestController
 public class CovinController {
 
+    private static final DateTimeFormatter format = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private final RestTemplate restTemplate;
+
     @Value("${pincode}")
     private Integer pincode;
 
     @Value("${lookForward:5}")
     private Integer lookForward;
 
-
-    private final RestTemplate restTemplate;
-
-    private static final DateTimeFormatter format = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-    private final String baseUrl = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/calendarByPin?pincode=%d&date=%s";
+    @Value("${covin.api.url}")
+    private String baseUrl;
 
     public CovinController(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
