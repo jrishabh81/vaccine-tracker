@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.MultiValueMap;
@@ -51,7 +50,7 @@ public class CovinController {
     }
 
     @Scheduled(fixedRateString = "${fixedRate:60000}")
-    public void keepChecking() {
+    public void keepChecking() throws InterruptedException {
         LocalDate today = LocalDate.now().plusDays(1);
         for (int i = 0; i < lookForward; i++) {
             LocalDate dateToCheck = today.plusDays(i);
@@ -64,6 +63,7 @@ public class CovinController {
                 SoundUtils.tone(400, 500);
             } else {
                 log.info("No slot available for : {}", dateToCheck);
+                Thread.sleep(1000);
             }
         }
         System.out.println("-----------------------------------------" + LocalDateTime.now() + "-------------------------------------------------------");
@@ -108,10 +108,10 @@ public class CovinController {
 
     private MultiValueMap<String, String> getHeaders() {
         MultiValueMap<String, String> headers = new HttpHeaders();
-        headers.add("access-control-allow-credentials", "true");
-        headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
-        headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-        headers.add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36");
+        headers.add("accept", "application/json, text/plain, */*");
+        headers.add("accept-language", "en-US,en;q=0.9,hi;q=0.8");
+        headers.add("dnt", "1");
+        headers.add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36");
         return headers;
     }
 }
