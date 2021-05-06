@@ -1,11 +1,13 @@
 package com.rishabh.cowin.vaccinetracker.controller;
 
+import com.rishabh.cowin.vaccinetracker.utils.SoundUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import java.awt.*;
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
@@ -49,29 +52,32 @@ public class CovinController {
 
     @Scheduled(fixedRateString = "${fixedRate:60000}")
     public void keepChecking() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now().plusDays(1);
         for (int i = 0; i < lookForward; i++) {
             LocalDate dateToCheck = today.plusDays(i);
             JSONArray jsonArray = checkAvailability(pincode, dateToCheck.format(format));
             if (!jsonArray.isEmpty()) {
                 log.info("Slots available !!!! : {}  -> {}", dateToCheck, jsonArray.length());
                 openBrowser();
+                SoundUtils.tone(400, 500);
+                SoundUtils.tone(400, 500);
+                SoundUtils.tone(400, 500);
             } else {
                 log.info("No slot available for : {}", dateToCheck);
             }
         }
-
+        System.out.println("-----------------------------------------" + LocalDateTime.now() + "-------------------------------------------------------");
     }
 
     private JSONArray checkAvailability(Integer pinCode, String date) {
         JSONArray availableSLots = new JSONArray();
-        HttpEntity<String> entity = new HttpEntity<>(getHeaders());
+        HttpEntity<String> entity = new HttpEntity<>("parameters", getHeaders());
         String url = String.format(baseUrl, pinCode, date);
         log.info(url);
-        ResponseEntity<String> forEntity = restTemplate.getForEntity(url, String.class, entity);
-        System.out.println("forEntity.getStatusCode() = " + forEntity.getStatusCode());
-        System.out.println("forEntity.getBody() = " + forEntity.getBody());
-        JSONObject jsonObject = new JSONObject(forEntity.getBody());
+        ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+        log.info("Http Status = {}", responseEntity.getStatusCode());
+        log.info("Response Body = " + responseEntity.getBody());
+        JSONObject jsonObject = new JSONObject(responseEntity.getBody());
         JSONArray centers = jsonObject.getJSONArray("centers");
         center:
         for (int i = 0; i < centers.length(); i++) {
@@ -104,6 +110,8 @@ public class CovinController {
         MultiValueMap<String, String> headers = new HttpHeaders();
         headers.add("access-control-allow-credentials", "true");
         headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+        headers.add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+        headers.add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36");
         return headers;
     }
 }
