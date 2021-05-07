@@ -28,6 +28,8 @@ public class CovinController {
 
     private static final DateTimeFormatter format = DateTimeFormatter.ofPattern("dd-MM-yyyy");
     private final RestTemplate restTemplate;
+    private static final String myOS = System.getProperty("os.name").toLowerCase();
+    private static final String url = "https://www.cowin.gov.in/home";
 
     @Value("${pincode}")
     private Integer pincode;
@@ -97,18 +99,32 @@ public class CovinController {
     }
 
     private void openBrowser() {
-        new Thread(() -> {
-            try {
-                Desktop.getDesktop().browse(new URI("https://www.cowin.gov.in/home"));
-            } catch (Exception e) {
-                e.printStackTrace();
+        try {
+            SoundUtils.tone(400, 500);
+            SoundUtils.tone(400, 500);
+            if (Desktop.isDesktopSupported()) {
+                // Probably Windows
+                Desktop desktop = Desktop.getDesktop();
+                desktop.browse(new URI(url));
+            } else {
+                // Definitely Non-windows
+                Runtime runtime = Runtime.getRuntime();
+                if (myOS.contains("mac")) {
+                    // Apples
+                    runtime.exec("open " + url);
+                } else if (myOS.contains("nix") || myOS.contains("nux")) {
+                    // Linux flavours
+                    runtime.exec("xdg-open " + url);
+                }
             }
-        }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private MultiValueMap<String, String> getHeaders() {
         MultiValueMap<String, String> headers = new HttpHeaders();
-        headers.add("accept", "application/json, text/plain, */*");
+        headers.add("accept", "*/*");
         headers.add("accept-language", "en-US,en;q=0.9,hi;q=0.8");
         headers.add("dnt", "1");
         headers.add("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36");
